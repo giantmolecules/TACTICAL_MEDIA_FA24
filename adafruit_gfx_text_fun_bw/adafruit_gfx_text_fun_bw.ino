@@ -21,8 +21,7 @@ Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 int colors[8] = {0xe81f, 0x681f, 0xf814, 0xfed0, 0xfd34, 0xff8d, 0x6d5f, 0x6e3f};
 int height = 135;
 int width = 240;
-int maxRadius = 30;
-int minRadius = 5;
+String chars[] = {"~", "@", "#", "%", "&", "*", "A", "B", "C", "D", "E", "F", " ", "  ", "   "};
 
 //----{SETUP}-----------------------------------------------------//
 
@@ -31,7 +30,7 @@ void setup() {
   // Start Serial COM
   Serial.begin(115200);
   //while(!Serial);
-  
+
   // turn on backlite
   pinMode(TFT_BACKLITE, OUTPUT);
   digitalWrite(TFT_BACKLITE, HIGH);
@@ -64,28 +63,32 @@ void setup() {
 void loop() {
 
   int choice = random(2);
-  Serial.print(choice);
-  int numLines = random(100);
+  //Serial.print(choice);
   int x = random(width);
   int y = random(height);
-  int length = random(1, width);
-  int spacing = random(10);
-  int c = random(8);
-  int t = random(10, 100);
-  int bw = random(1000);
+  int t = random(5,100);
+  int numChars = random(5);
+  int charSize = random(1, 5);
+  
+  tft.setTextSize(charSize);
+  tft.setCursor(x, y);
 
   if (choice >= 1) {
-    for(int i = 0; i <= numLines; i++){
-      tft.drawFastHLine(x, y+(spacing*i), length, ST77XX_BLACK); 
+    for (int i = 0; i <= numChars; i++) {
+      tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
+      int character = random(15);
+      tft.print(chars[character]);
     }
   }
 
   if (choice == 0) {
-    for(int i = 0; i <= numLines; i++){
-      tft.drawFastVLine(x+(spacing*i), y, length, ST77XX_WHITE); 
+    for (int i = 0; i <= numChars; i++) {
+      tft.setTextColor(ST77XX_BLACK, ST77XX_WHITE);
+      int character = random(15);
+      tft.print(chars[character]);
     }
   }
-  
+
   delay(t);
 }
 
