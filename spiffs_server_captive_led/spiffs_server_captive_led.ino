@@ -4,9 +4,9 @@
 // Brett Ian Balogh
 // https://github.com/giantmolecules/TACTICAL_MEDIA_FA24
 //
-// tft_template.ino
+// spiffs_server_captive_led.ino
 //
-// This is a template for our code that readies the TFT for use.
+// This demonstrates control of an LED from a captive web page.
 //
 //----------------------------------------------------------------//
 
@@ -94,12 +94,12 @@ class CaptiveRequestHandler : public AsyncWebHandler {
     virtual ~CaptiveRequestHandler() {}
 
     bool canHandle(AsyncWebServerRequest *request) {
-      //request->addInterestingHeader("ANY");
+      request->addInterestingHeader("ANY");
       return true;
     }
 
     void handleRequest(AsyncWebServerRequest *request) {
-      request->send(SPIFFS, "/page2.html", "text/html", false);
+      request->send(SPIFFS, "/index.html", "text/html", false);
     }
 };
 
@@ -119,6 +119,7 @@ void setupServer() {
   // Route to set GPIO to HIGH
   server.on("/on", HTTP_GET, [](AsyncWebServerRequest * request) {
     digitalWrite(ledPin, HIGH);
+    tft.fillScreen(ST77XX_BLACK);
     tft.setCursor(0, 32);
     tft.print("ON ");
     request->send(SPIFFS, "/index.html", String(), false, processor);
@@ -127,6 +128,7 @@ void setupServer() {
   // Route to set GPIO to LOW
   server.on("/off", HTTP_GET, [](AsyncWebServerRequest * request) {
     digitalWrite(ledPin, LOW);
+    tft.fillScreen(ST77XX_BLACK);
     tft.setCursor(0, 32);
     tft.print("OFF");
     request->send(SPIFFS, "/index.html", String(), false, processor);
