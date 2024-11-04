@@ -28,8 +28,7 @@ WiFiServer server(80);
 
 String responseHTML = ""
   "<!DOCTYPE html><html><head><title>CaptivePortal</title></head><body>"
-  "<h1>Hello World!</h1><p>This is a captive portal example. All requests will "
-  "be redirected here.</p></body></html>";
+  "<h1>Hello World!</h1><p>I am Brett and this is a word. </p></body></html>";
 
 void setup() { 
     // Start Serial COM
@@ -59,7 +58,7 @@ void setup() {
   tft.setTextColor(ST77XX_WHITE,ST77XX_BLACK);
   
   WiFi.mode(WIFI_AP);
-  WiFi.softAP("ESP32-DNSServer");
+  WiFi.softAP("Brett's AP");
   WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
 
   // if DNSServer is started with "*" for domain name, it will reply with

@@ -30,7 +30,7 @@ DNSServer dnsServer;
 AsyncWebServer server(80);
 
 // Set LED GPIO
-const int ledPin = 13;
+const int ledPin = 6;
 
 // Stores LED state
 String ledState;
@@ -141,7 +141,7 @@ void setupServer() {
 //----{SETUP}-----------------------------------------------------//
 
 void setup() {
-
+  pinMode(ledPin, OUTPUT);
   //your other setup stuff...
   Serial.begin(115200);
   //while(!Serial); // uncomment to catch serial in setup.
