@@ -20,21 +20,14 @@
 //----------------------------------------------------------------//
 
 #include <Arduino.h>
-
 #include <WiFi.h>
 #include <WiFiMulti.h>
-
 #include <HTTPClient.h>
-
 #include <WiFiClientSecure.h>
-
 #include <Arduino_JSON.h>
-
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
-
-#define RAIN_PIN 5
 
 // Create a TFT object
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
@@ -65,7 +58,7 @@ String setClock() {
 
 WiFiMulti WiFiMulti;
 JSONVar myObject;
-int probability = 0;
+String forecast = "";
 int timeNow = 0;
 int timeThen = 0;
 int errorCounter = 0;
@@ -85,47 +78,10 @@ int interval = 3600000;  //1 hour
 /************************************************/
 
 
-
-/************************************************/
-
-// Threshold percent chance of precip. to decide if we're raining
-
-int precipThreshold = 90;
-
-/************************************************/
-
-
-
-/************************************************/
-
-// rain duration in milliseconds. 1s = 1000ms.
-
-int rainDuration = 5000;
-int rainDurationMin = 1000;
-int rainDurationMax = 10000;
-
-/************************************************/
-
-
-
-/************************************************/
-
-// Value to control interval between rain in milliseconds
-// rainPuase will be recalculated after first rain to be between rainPauseMin & max
-
-int rainPause = 6000;  //60000 = 1min
-int rainPauseMin = 3000;
-int rainPauseMax = 9000;
-
-/************************************************/
-
-
-
 void setup() {
 
   Serial.begin(115200);
   // Serial.setDebugOutput(true);
-  pinMode(RAIN_PIN, OUTPUT);
   Serial.println();
   Serial.println();
   Serial.println();
@@ -137,6 +93,7 @@ void setup() {
   // Change for your wifi credentials
 
   WiFiMulti.addAP("SAIC-Guest", "wifi@saic");
+  
 
   /************************************************/
 
@@ -180,35 +137,10 @@ void loop() {
     tft.setCursor(0, 0);
     tft.setTextSize(2);
     tft.println(setClock());
-    //tft.print(myObject["properties"]["periods"][0]["probabilityOfPrecipitation"]["value"]);
-    tft.setTextSize(2);
-    tft.print("Probability: ");
-    tft.print(probability);
-    tft.println("%");
-    tft.print("Raining: ");
-    tft.println(raining);
-    tft.print("Rain Duration: ");
-    tft.println(rainDuration);
-    tft.print("Rain Pause: ");
-    tft.println(rainPause);
-    tft.print("Rain On? ");
-    tft.print(rain);
+    tft.setTextColor(ST77XX_RED, ST77XX_BLACK);
+    tft.print(forecast);
+    tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
     pastPrintTime = millis();
-  }
-  // Let it rain
-  if (raining) {
-    if (rain) {
-      rainDuration = int(random(rainDurationMin, rainDurationMax));
-      digitalWrite(RAIN_PIN, HIGH);
-      delay(rainDuration);
-      digitalWrite(RAIN_PIN, LOW);
-      rain = false;
-    }
-    if (millis() - pastRainTime > rainPause) {
-      rain = true;
-      pastRainTime = millis();
-      rainPause = int(random(rainPauseMin, rainPauseMax));
-    }
   }
 
   timeNow = millis();
@@ -223,7 +155,7 @@ void loop() {
         HTTPClient https;
 
         Serial.print("[HTTPS] begin...\n");
-        if (https.begin(*client, "https://api.weather.gov/gridpoints/PBZ/75,77/forecast")) {  // Chicago
+        if (https.begin(*client, "https://api.weather.gov/gridpoints/LOT/76,73/forecast")) {  // Chicago
           Serial.print("[HTTPS] GET...\n");
           // start connection and send HTTP header
           int httpCode = https.GET();
@@ -237,53 +169,41 @@ void loop() {
             if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
               String jsonString = https.getString();
               myObject = JSON.parse(jsonString);
-              //Serial.println(JSON.typeof(myObject["properties"]["periods"][0]["probabilityOfPrecipitation"]["value"]));
+                Serial.print("Output: ");
+                Serial.println(myObject["properties"]["periods"][0]["shortForecast"]);
+                forecast = JSON.stringify(myObject["properties"]["periods"][0]["shortForecast"]);
+              }
+            } else {
+              Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+              errorCounter++;
 
-              probability = myObject["properties"]["periods"][0]["probabilityOfPrecipitation"]["value"];
-              
-              // Comment this line out when not testing.
-              probability = 99;
-              
-              // decide if we should rain or not.
+              // if we get too many connection errors, restart the ESP
 
-              if (probability > precipThreshold) {
-                raining = true;
-                rain = true;
-              } else {
-                raining = false;
-                rain = false;
+              if (errorCounter >= 3) {
+                ESP.restart();
               }
             }
+
+            https.end();
           } else {
-            Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
-            errorCounter++;
-
-            // if we get too many connection errors, restart the ESP
-
-            if (errorCounter >= 3) {
-              ESP.restart();
-            }
+            Serial.printf("[HTTPS] Unable to connect\n");
           }
 
-          https.end();
-        } else {
-          Serial.printf("[HTTPS] Unable to connect\n");
+          // End extra scoping block
         }
 
-        // End extra scoping block
+        delete client;
+      }
+      else {
+        Serial.println("Unable to create client");
       }
 
-      delete client;
-    } else {
-      Serial.println("Unable to create client");
+      Serial.println();
+      Serial.println("Waiting 1h before the next round...");
+      //delay(90000);
+      if (firstTime) {
+        firstTime = 0;
+      }
+      timeThen = millis();
     }
-
-    Serial.println();
-    Serial.println("Waiting 1h before the next round...");
-    //delay(90000);
-    if (firstTime) {
-      firstTime = 0;
-    }
-    timeThen = millis();
   }
-}
