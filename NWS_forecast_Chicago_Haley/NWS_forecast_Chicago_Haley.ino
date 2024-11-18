@@ -103,8 +103,11 @@ void setup() {
 
   // Change for your wifi credentials
 
-  WiFiMulti.addAP("SAIC-Guest", "wifi@saic");
+  // SAIC Guest WiFi
+  //WiFiMulti.addAP("SAIC-Guest", "wifi@saic");
 
+  // Brett testing at home
+  WiFiMulti.addAP("SONGBIRD", "quietcartoon195");
 
   /************************************************/
 
@@ -147,6 +150,7 @@ void setup() {
 }
 
 void loop() {
+
   // Print to TFT
   if (millis() - pastPrintTime > printInterval) {
     tft.fillScreen(ST77XX_BLACK);
@@ -163,6 +167,11 @@ void loop() {
 
   timeNow = millis();
   if (timeNow - timeThen > interval || firstTime) {
+    
+    if (firstTime) {
+      firstTime = 0;
+    }
+
     WiFiClientSecure *client = new WiFiClientSecure;
 
     if (client) {
@@ -190,17 +199,17 @@ void loop() {
 
               forecast = JSON.stringify(myObject["properties"]["periods"][0]["shortForecast"]);
               temperature = myObject["properties"]["periods"][0]["temperature"];
-              temperature = 100;
 
-              // Update buffer and strip
-              updateStripBuffer(temperature);
+              // Uncomment for testing
+              //temperature = 100;
+
+
 
               // Debug
               Serial.print("Short Forecast: ");
               Serial.print(forecast);
               Serial.print(" Temperature: ");
               Serial.println(temperature);
-
             }
           } else {
             Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
@@ -229,30 +238,32 @@ void loop() {
     Serial.println();
     Serial.println("Waiting 1h before the next round...");
     //delay(90000);
-    if (firstTime) {
-      firstTime = 0;
-    }
+
+
+    // Update buffer and strip
+    updateStripBuffer(temperature);
+
+    // Reset Timer
     timeThen = millis();
   }
 }
 
 void updateStripBuffer(int temp) {
 
-    // Map temperature to neopixel range
+  // Map temperature to neopixel range
   int color = constrain(temp, minTemp, maxTemp);
   color = map(color, minTemp, maxTemp, 0, 255);
 
   // Shift values and update with new temp
   for (int i = LED_COUNT - 1; i > 0; i--) {
     stripBuffer[i] = stripBuffer[i - 1];
-    stripBuffer[0] = color;
   }
+  stripBuffer[0] = color;
 
   // Write array into strip and print for debug
   Serial.print("stripBuffer[] = {");
   for (int i = 0; i < LED_COUNT; i++) {
-    //strip.setPixelColor(i, 0, stripBuffer[i], 255 - stripBuffer[i], 0);
-    strip.setPixelColor(i, stripBuffer[i],0 , 255 - stripBuffer[i], 0);
+    strip.setPixelColor(i, stripBuffer[i], 0, 255 - stripBuffer[i], 0);
     Serial.print(stripBuffer[i]);
     Serial.print(", ");
   }
@@ -260,5 +271,4 @@ void updateStripBuffer(int temp) {
 
   // Display new strip
   strip.show();
-
 }
