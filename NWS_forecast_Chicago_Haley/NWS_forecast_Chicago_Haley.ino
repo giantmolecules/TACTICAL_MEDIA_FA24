@@ -151,19 +151,19 @@ void setup() {
 
 void loop() {
 
-  // Print to TFT
-  if (millis() - pastPrintTime > printInterval) {
-    tft.fillScreen(ST77XX_BLACK);
-    tft.setCursor(0, 0);
-    tft.setTextSize(2);
-    tft.println(setClock());
-    tft.setTextColor(ST77XX_RED, ST77XX_BLACK);
-    tft.print(forecast);
-    tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
-    pastPrintTime = millis();
-    // For testing
-    //updateStripBuffer(temperature);
-  }
+  // // Print to TFT
+  // if (millis() - pastPrintTime > printInterval) {
+  //   tft.fillScreen(ST77XX_BLACK);
+  //   tft.setCursor(0, 0);
+  //   tft.setTextSize(2);
+  //   tft.println(setClock());
+  //   tft.setTextColor(ST77XX_RED, ST77XX_BLACK);
+  //   tft.print(forecast);
+  //   tft.setTextColor(ST77XX_WHITE, ST77XX_BLACK);
+  //   pastPrintTime = millis();
+  //   // For testing
+  //   //updateStripBuffer(temperature);
+  // }
 
   timeNow = millis();
   if (timeNow - timeThen > interval || firstTime) {
@@ -196,7 +196,8 @@ void loop() {
             if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
               String jsonString = https.getString();
               myObject = JSON.parse(jsonString);
-
+              Serial.print("Object: ");
+              Serial.println(myObject);
               forecast = JSON.stringify(myObject["properties"]["periods"][0]["shortForecast"]);
               temperature = myObject["properties"]["periods"][0]["temperature"];
 
